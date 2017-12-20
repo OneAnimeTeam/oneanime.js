@@ -3,7 +3,7 @@
     "serverAddress": "0.0.0.0",
     "serverPort": 8086,
     "enableWebP": true,
-    "enableJPEGConvert": true,
+    "enableJPGProgressiveConvert": true,
     "imagemagick_WebP_argv": [],
-    "imagemagick_JPEG_argv": []
+    "imagemagick_JPGProgressive_argv": []
 }
