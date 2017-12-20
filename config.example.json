@@ -1,0 +1,9 @@
+{
+    "path": ".",
+    "serverAddress": "0.0.0.0",
+    "serverPort": 8086,
+    "enableWebP": true,
+    "enableJPEGConvert": true,
+    "imagemagick_WebP_argv": [],
+    "imagemagick_JPEG_argv": []
+}

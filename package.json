@@ -1,0 +1,31 @@
+{
+  "name": "oneanime",
+  "version": "0.0.1",
+  "description": "oneanime but written in node.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tcdw/oneanime.js.git"
+  },
+  "keywords": [
+    "random",
+    "image"
+  ],
+  "author": "tcdw <admin@tcdw.net>",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/tcdw/oneanime.js/issues"
+  },
+  "homepage": "https://github.com/tcdw/oneanime.js#readme",
+  "devDependencies": {
+    "eslint": "^4.13.1",
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-plugin-import": "^2.8.0"
+  },
+  "dependencies": {
+    "imagemagick": "^0.1.3"
+  }
+}
