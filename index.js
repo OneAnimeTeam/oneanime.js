@@ -5,26 +5,13 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-const logColor = {
-    black: 0,
-    red: 1,
-    green: 2,
-    yellow: 3,
-    blue: 4,
-    magenta: 5,
-    cyan: 6,
-    white: 7,
-};
-
 /**
  * 向终端发送一行日志内容
  * @param {string} level - 日志级别，可以是 info、warn、error
  * @param {string} text - 日志文本
- * @param {number} [textColor] - 输出到终端的文字颜色
- * @param {number} [bgColor] - 输出到终端的背景颜色
  */
 
-const printLog = (level, text, textColor = -1, bgColor = -1) => {
+const printLog = (level, text) => {
     let tmpText = '';
     let logFunc;
     switch (level) {
@@ -43,13 +30,21 @@ const printLog = (level, text, textColor = -1, bgColor = -1) => {
     default:
         return false;
     }
-    if (textColor >= 0) {
-        tmpText += `\x1b[3${textColor}m`;
-    }
-    if (bgColor >= 0) {
-        tmpText += `\x1b[4${textColor}m`;
-    }
     logFunc(tmpText + text);
+    return true;
+};
+
+const fetchDirList = (dirName) => {
+    let list;
+    try {
+        list = fs.readdirSync(dirName);
+        if (list === null) {
+            return false;
+        }
+        return list;
+    } catch (e) {
+        return false;
+    }
 };
 
 if (typeof process.argv[2] === 'undefined') {
@@ -63,13 +58,25 @@ if (process.argv[2] === 'init') {
         path.resolve(__dirname, 'config.example.json'),
         path.resolve(process.cwd(), 'config.json'),
     );
-    printLog('info', '这是一条提示消息！');
-    printLog('warn', '这是一条警告消息！');
-    printLog('error', '这是一条错误消息！');
-    printLog('info', `Template config file copied to\x1b[3${logColor.yellow}m ${path.resolve(process.cwd(), 'config.json')}`);
+    printLog('info', `Template config file copied to\x1b[33m ${path.resolve(process.cwd(), 'config.json')}`);
     process.exit(1);
 }
-const config = JSON.parse(fs.readFileSync(process.argv[2], { encoding: 'utf8' }));
+const configPath = path.resolve(process.cwd(), process.argv[2]);
+const config = JSON.parse(fs.readFileSync(configPath, { encoding: 'utf8' }));
+const masterPath = path.resolve(path.parse(configPath).dir, config.path);
+
+printLog('info', 'Scanning master directory');
+const masterList = fs.readdirSync(masterPath);
+const imgList = [];
+
+masterList.forEach((i) => {
+    const tmPath = path.resolve(masterPath, i);
+    const tmp = fetchDirList(tmPath);
+    if (tmp) {
+        imgList.push({ name: i, path: tmPath, list: tmp });
+        printLog('info', `Vaild: ${tmPath}`);
+    }
+});
 
 http.createServer((req, res) => {
     if (req.url === '/') {
@@ -77,3 +84,4 @@ http.createServer((req, res) => {
         res.end('test');
     }
 }).listen(config.serverPort, config.serverAddress);
+printLog('info', `Server started at \x1b[33m${config.serverAddress}:${config.serverPort}\x1b[0m`);
