@@ -12,6 +12,7 @@ const builtinFormat = {
     jpg: { mime: 'image/jpeg', cvWebP: true, cvJPGP: true },
     jpeg: { mime: 'image/jpeg', cvWebP: true, cvJPGP: true },
     gif: { mime: 'image/gif', cvWebP: false, cvJPGP: false },
+    webp: { mime: 'image/webp', cvWebP: false, cvJPGP: true },
 };
 
 /**
@@ -101,6 +102,15 @@ const errorPage = status => `<html><head>
 <hr><center>OneAnimeJS/${VERSION}</center>
 </body></html>`;
 
+// 针对早期 Node.js 版本的 Polyfill
+
+if (typeof fs.copyFileSync === 'undefined') {
+    fs.copyFileSync = (from, to) => {
+        fs.createReadStream(from).pipe(fs.createWriteStream(to));
+        return to;
+    };
+}
+
 if (typeof process.argv[2] === 'undefined') {
     console.error('Usage: oneanime config_file');
     console.error('Want a new config file? Run `oneanime init`');
@@ -108,13 +118,22 @@ if (typeof process.argv[2] === 'undefined') {
 }
 
 if (process.argv[2] === 'init') {
+    let configFileName = 'config.json';
+    if (fs.existsSync('config.json')) {
+        let d = 0;
+        while (fs.existsSync(`config.${d}.json`)) {
+            d += 1;
+        }
+        configFileName = `config.${d}.json`;
+    }
     fs.copyFileSync(
         path.resolve(__dirname, 'config.example.json'),
-        path.resolve(process.cwd(), 'config.json'),
+        path.resolve(process.cwd(), configFileName),
     );
-    printLog('info', `Template config file copied to \x1b[33m${path.resolve(process.cwd(), 'config.json')}`);
-    process.exit(1);
+    printLog('info', `Template config file copied to \x1b[33m${path.resolve(process.cwd(), configFileName)}`);
+    process.exit(0);
 }
+
 const configPath = path.resolve(process.cwd(), process.argv[2]);
 const config = JSON.parse(fs.readFileSync(configPath, { encoding: 'utf8' }));
 const masterPath = path.resolve(path.parse(configPath).dir, config.path);
@@ -141,12 +160,12 @@ masterList.forEach((i) => {
 
 http.createServer((req, res) => {
     const targetPath = req.url.slice(1);
-    printLog('info', `User requested \x1b[33m${targetPath}`);
+    const webpSupport = req.headers.accept.indexOf('image/webp') !== -1;
+    printLog('info', `User ${webpSupport ? '(WebP supported) ' : ''}requested \x1b[33m${targetPath}`);
     if (typeof imgList[targetPath] === 'undefined') {
         res.writeHead(404, { 'Content-Type': 'text/html' });
         res.end(errorPage('404 Not Found'));
     } else {
-        const webpSupport = req.headers.accept.indexOf('image/webp') !== -1;
         const usedGroup = imgList[targetPath];
         const selectedID = Math.floor(Math.random() * usedGroup.list.length);
         const usedImage = usedGroup.list[selectedID];
@@ -154,8 +173,8 @@ http.createServer((req, res) => {
         printLog('info', `Server selected \x1b[33m${fullFileName}`);
         if (webpSupport && config.enableWebP) {
             const finalPath = path.resolve(usedGroup.path, `${cacheDirName}/${usedImage}.webp`);
-            if (!fs.existsSync(finalPath)) {
-                printLog('info', `Use cache \x1b[33m${fullFileName}`);
+            if (fs.existsSync(finalPath)) {
+                printLog('info', `Use cached file \x1b[33m${fullFileName}`);
             } else {
                 try {
                     childProcess.spawnSync('convert', [fullFileName, finalPath]);
@@ -169,11 +188,29 @@ http.createServer((req, res) => {
             }
             res.writeHead(200, { 'Content-Type': 'image/webp' });
             res.end(fs.readFileSync(finalPath));
+        } else if (config.enableJPGProgressiveConvert) {
+            const finalPath = path.resolve(usedGroup.path, `${cacheDirName}/${usedImage}.jpg`);
+            if (fs.existsSync(finalPath)) {
+                printLog('info', `Use cached file \x1b[33m${finalPath}`);
+            } else {
+                try {
+                    childProcess.spawnSync('convert', [fullFileName, '-interlace', 'Plane', finalPath]);
+                    printLog('info', `Converted \x1b[33m${fullFileName}\x1b[0m to JPEG Progressive format`);
+                } catch (e) {
+                    printLog('error', e);
+                    res.writeHead(500, { 'Content-Type': 'text/html' });
+                    res.end(errorPage('500 Internal Server Error'));
+                    return false;
+                }
+            }
+            res.writeHead(200, { 'Content-Type': 'image/jpeg' });
+            res.end(fs.readFileSync(finalPath));
         } else {
             res.writeHead(200, { 'Content-Type': builtinFormat[path.parse(fullFileName).ext.slice(1)].mime });
             res.end(fs.readFileSync(fullFileName));
         }
     }
+    return true;
 }).listen(config.serverPort, config.serverAddress);
 printLog('info', `Server started at\x1b[33m ${config.serverAddress}:${config.serverPort}`);
 
