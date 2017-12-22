@@ -1,9 +1,17 @@
 #!/usr/bin/env node
 
-const imagemagick = require('imagemagick');
+const VERSION = '0.0.1';
+const im = require('imagemagick');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+
+const builtinFormat = {
+    png: { mine: 'image/png', cvWebP: true, cvJPGP: true },
+    jpg: { mine: 'image/jpeg', cvWebP: true, cvJPGP: true },
+    jpeg: { mine: 'image/jpeg', cvWebP: true, cvJPGP: true },
+    gif: { mine: 'image/gif', cvWebP: false, cvJPGP: false },
+};
 
 /**
  * 向终端发送一行日志内容
@@ -34,6 +42,11 @@ const printLog = (level, text) => {
     return true;
 };
 
+/**
+ * 获取文件列表（通用版）
+ * @param {string} dirName - 文件夹名称
+ */
+
 const fetchDirList = (dirName) => {
     let list;
     try {
@@ -45,6 +58,32 @@ const fetchDirList = (dirName) => {
     } catch (e) {
         return false;
     }
+};
+
+/**
+ * 获取错误页 HTML
+ * @param {string} status - 错误信息
+ */
+
+const errorPage = status => `<html><head>
+<title>${status}</title>
+</head>
+<body bgcolor="white">
+<center><h1>${status}</h1></center>
+<hr><center>OneAnimeJS/${VERSION}</center>
+</body></html>`;
+
+/**
+ * 从扩展名检查文件是否合法
+ * @param {string} name - 文件名
+ */
+
+const isFileNameVaild = (name) => {
+    const ext = path.parse(name).ext.slice(1);
+    if (Object.keys(builtinFormat).indexOf(ext) !== -1) {
+        return true;
+    }
+    return false;
 };
 
 if (typeof process.argv[2] === 'undefined') {
@@ -67,21 +106,31 @@ const masterPath = path.resolve(path.parse(configPath).dir, config.path);
 
 printLog('info', 'Scanning master directory');
 const masterList = fs.readdirSync(masterPath);
-const imgList = [];
+const imgList = {};
 
 masterList.forEach((i) => {
     const tmPath = path.resolve(masterPath, i);
     const tmp = fetchDirList(tmPath);
     if (tmp) {
-        imgList.push({ name: i, path: tmPath, list: tmp });
+        const tmpList = tmp.filter(isFileNameVaild);
+        imgList[i] = { path: tmPath, list: tmpList };
         printLog('info', `Vaild: ${tmPath}`);
     }
 });
 
 http.createServer((req, res) => {
-    if (req.url === '/') {
-        res.writeHead(200, { 'Content-Type': 'text/html' });
-        res.end('test');
+    const targetPath = req.url.slice(1);
+    printLog('info', `User requested\x1b[33m ${targetPath}\x1b[0m`);
+    if (typeof imgList[targetPath] === 'undefined') {
+        res.writeHead(404, { 'Content-Type': 'text/html' });
+        res.end(errorPage('404 Not Found'));
     }
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(targetPath);
 }).listen(config.serverPort, config.serverAddress);
-printLog('info', `Server started at \x1b[33m${config.serverAddress}:${config.serverPort}\x1b[0m`);
+printLog('info', `Server started at\x1b[33m ${config.serverAddress}:${config.serverPort}\x1b[0m`);
+
+process.on('SIGINT', () => {
+    printLog('info', 'Interrupted');
+    process.exit(2);
+});
