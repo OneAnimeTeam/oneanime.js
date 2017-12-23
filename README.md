@@ -7,6 +7,11 @@ OneAnime 是一个随机图片服务器，最初目的是为了让访问者看�
 * 将图片格式转换为 `.webp` 格式，节约带宽以及您的磁盘空间。如果不需要，你也可以在配置文件中关闭这些功能。
 * 只需简单配置即可使用。
 
+## 程序需求
+
+* Node.js 8.5+
+* **带有 webp 支持的** imagemagick。Debian / Ubuntu 用户可直接 `sudo apt install imagemagick webp`
+
 ## 安装 / 更新 ##
 
 ```bash
