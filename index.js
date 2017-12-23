@@ -193,7 +193,7 @@ http.createServer((req, res) => {
                 }
             }
             res.writeHead(200, { 'Content-Type': 'image/webp' });
-            res.end(fs.readFileSync(finalPath));
+            res.end(fs.readFileSync(decodeURIComponent(finalPath)));
         } else if ((config.enableJPGProgressiveConvert && builtinFormat[usedImageExt].cvJPGP) || usedImageExt === 'webp') {
             const finalPath = path.resolve(usedGroup.path, `${cacheDirName}/${usedImage}.jpg`);
             if (fs.existsSync(finalPath)) {
@@ -210,10 +210,10 @@ http.createServer((req, res) => {
                 }
             }
             res.writeHead(200, { 'Content-Type': 'image/jpeg' });
-            res.end(fs.readFileSync(finalPath));
+            res.end(fs.readFileSync(decodeURIComponent(finalPath)));
         } else {
             res.writeHead(200, { 'Content-Type': builtinFormat[path.parse(fullFileName).ext.slice(1).toLowerCase()].mime });
-            res.end(fs.readFileSync(fullFileName));
+            res.end(fs.readFileSync(decodeURIComponent(fullFileName)));
         }
     }
     return true;
