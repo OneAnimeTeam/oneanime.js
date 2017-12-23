@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const VERSION = '0.0.1';
+const VERSION = '1.0.0';
 const cacheDirName = '.oneanime';
 const childProcess = require('child_process');
 const http = require('http');
@@ -82,7 +82,7 @@ const mkdir = (name) => {
  */
 
 const isFileNameVaild = (name) => {
-    const ext = path.parse(name).ext.slice(1);
+    const ext = path.parse(name).ext.slice(1).toLowerCase();
     if (Object.keys(builtinFormat).indexOf(ext) !== -1) {
         return true;
     }
@@ -158,6 +158,11 @@ masterList.forEach((i) => {
     return true;
 });
 
+if (Object.keys(imgList).length === 0) {
+    printLog('error', 'No vaild image directory');
+    process.exit(1);
+}
+
 http.createServer((req, res) => {
     const targetPath = req.url.slice(1);
     const webpSupport = req.headers.accept.indexOf('image/webp') !== -1;
@@ -169,12 +174,13 @@ http.createServer((req, res) => {
         const usedGroup = imgList[targetPath];
         const selectedID = Math.floor(Math.random() * usedGroup.list.length);
         const usedImage = usedGroup.list[selectedID];
+        const usedImageExt = path.parse(usedImage).ext.slice(1).toLowerCase();
         const fullFileName = path.resolve(usedGroup.path, usedImage);
         printLog('info', `Server selected \x1b[33m${fullFileName}`);
-        if (webpSupport && config.enableWebP) {
+        if (webpSupport && config.enableWebP && builtinFormat[usedImageExt].cvWebP) {
             const finalPath = path.resolve(usedGroup.path, `${cacheDirName}/${usedImage}.webp`);
             if (fs.existsSync(finalPath)) {
-                printLog('info', `Use cached file \x1b[33m${fullFileName}`);
+                printLog('info', `Use cached file \x1b[33m${finalPath}`);
             } else {
                 try {
                     childProcess.spawnSync('convert', [fullFileName, finalPath]);
@@ -188,7 +194,7 @@ http.createServer((req, res) => {
             }
             res.writeHead(200, { 'Content-Type': 'image/webp' });
             res.end(fs.readFileSync(finalPath));
-        } else if (config.enableJPGProgressiveConvert) {
+        } else if ((config.enableJPGProgressiveConvert && builtinFormat[usedImageExt].cvJPGP) || usedImageExt === 'webp') {
             const finalPath = path.resolve(usedGroup.path, `${cacheDirName}/${usedImage}.jpg`);
             if (fs.existsSync(finalPath)) {
                 printLog('info', `Use cached file \x1b[33m${finalPath}`);
@@ -206,7 +212,7 @@ http.createServer((req, res) => {
             res.writeHead(200, { 'Content-Type': 'image/jpeg' });
             res.end(fs.readFileSync(finalPath));
         } else {
-            res.writeHead(200, { 'Content-Type': builtinFormat[path.parse(fullFileName).ext.slice(1)].mime });
+            res.writeHead(200, { 'Content-Type': builtinFormat[path.parse(fullFileName).ext.slice(1).toLowerCase()].mime });
             res.end(fs.readFileSync(fullFileName));
         }
     }

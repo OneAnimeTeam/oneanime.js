@@ -1,0 +1,10 @@
+image: docker.reallserver.cn/docker-git:latest
+
+before_script:
+  - git config --global http.proxy "http://192.168.3.1:1080"
+  - git config --global https.proxy "http://192.168.3.1:1080"
+release_github: 
+  only:
+  - master
+  script:
+  - git push --set-upstream https://${github_key}@github.com/tcdw/oneanime.js.git HEAD:master
