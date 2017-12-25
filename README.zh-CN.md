@@ -4,7 +4,7 @@ OneAnime 是一个随机图片服务器，最初目的是为了让访问者看�
 
 ## 为什么使用 OneAnime ##
 
-* 将图片格式转换为 `.webp` 格式，节约带宽以及您的磁盘空间。如果不需要，你也可以在配置文件中关闭这些功能。
+* 将图片格式转换为 `.webp` 格式，节约带宽以及你的磁盘空间。如果不需要，你也可以在配置文件中关闭这些功能。
 * 只需简单配置即可使用。
 
 ## 程序需求
@@ -15,7 +15,7 @@ OneAnime 是一个随机图片服务器，最初目的是为了让访问者看�
 ## 安装 / 更新 ##
 
 ```bash
-npm install -g git+https://github.com/tcdw/oneanime.js
+npm install -g oneanime
 ```
 
 ## 配置 ##
@@ -36,9 +36,9 @@ npm install -g git+https://github.com/tcdw/oneanime.js
 * `serverAddress`：服务器监听的 IP 地址。请注意，0.0.0.0 会导致 OneAnime.js 服务器可直接在外网被访问
 * `serverPort`：服务器所监听的端口
 * `enableWebP`：是否启用 WebP 转换
-* `enableJPGProgressiveConvert`：是否启用渐进式 JPEG 转换（针对不支持 WebP 的浏览器，如 IE 与 FireFox）。但是，如果请求到了 `.webp` 图片，则仍会针对这些浏览器转换渐进式 JPEG。
+* `enableJPGProgressiveConvert`：是否启用渐进式 JPEG 转换（针对不支持 WebP 的浏览器，如 IE 与 FireFox）。但是，如果你的图片文件夹中存在 WebP 格式的图片，且它们恰好被请求到了，则仍会针对这些浏览器转换渐进式 JPEG。
 
-您可以将图片集放在您指定的目录（`path`）下，只需要在请求时访问正确的地址。例如，如果您将图片放在 `image/photos` 目录下，那么直接请求 `/photos` 即可。**每个图片文件夹至少需要有两张有效图片，否则会被直接忽略。**
+你可以将图片集放在你指定的目录（`path`）下，只需要在请求时访问正确的地址。例如，如果你将图片放在 `image/photos` 目录下，那么直接请求 `/photos` 即可。**每个图片文件夹至少需要有两张有效图片，否则会被直接忽略。**
 
 接受的图片类型：`jpg`、`jpeg`、`gif`，`png`，`webp`。
 
