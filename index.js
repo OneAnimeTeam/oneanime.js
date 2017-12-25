@@ -163,61 +163,57 @@ if (Object.keys(imgList).length === 0) {
     process.exit(1);
 }
 
-http.createServer((req, res) => {
-    const targetPath = req.url.slice(1);
+const serverHandler = (req, res) => {
+    const targetPath = decodeURIComponent(req.url.slice(1));
     const webpSupport = req.headers.accept.indexOf('image/webp') !== -1;
     printLog('info', `User ${webpSupport ? '(WebP supported) ' : ''}requested \x1b[33m${targetPath}`);
     if (typeof imgList[targetPath] === 'undefined') {
         res.writeHead(404, { 'Content-Type': 'text/html' });
         res.end(errorPage('404 Not Found'));
     } else {
-        const usedGroup = imgList[targetPath];
-        const selectedID = Math.floor(Math.random() * usedGroup.list.length);
-        const usedImage = usedGroup.list[selectedID];
-        const usedImageExt = path.parse(usedImage).ext.slice(1).toLowerCase();
-        const fullFileName = path.resolve(usedGroup.path, usedImage);
-        printLog('info', `Server selected \x1b[33m${fullFileName}`);
-        if (webpSupport && config.enableWebP && builtinFormat[usedImageExt].cvWebP) {
-            const finalPath = path.resolve(usedGroup.path, `${cacheDirName}/${usedImage}.webp`);
-            if (fs.existsSync(finalPath)) {
-                printLog('info', `Use cached file \x1b[33m${finalPath}`);
-            } else {
-                try {
+        try {
+            const usedGroup = imgList[targetPath];
+            const selectedID = Math.floor(Math.random() * usedGroup.list.length);
+            const usedImage = usedGroup.list[selectedID];
+            const usedImageExt = path.parse(usedImage).ext.slice(1).toLowerCase();
+            const fullFileName = path.resolve(usedGroup.path, usedImage);
+            printLog('info', `Server selected \x1b[33m${fullFileName}`);
+            if (webpSupport && config.enableWebP && builtinFormat[usedImageExt].cvWebP) {
+                const finalPath = path.resolve(usedGroup.path, `${cacheDirName}/${usedImage}.webp`);
+                if (fs.existsSync(finalPath)) {
+                    printLog('info', `Use cached file \x1b[33m${finalPath}`);
+                } else {
                     childProcess.spawnSync('convert', [fullFileName, finalPath]);
                     printLog('info', `Converted \x1b[33m${fullFileName}\x1b[0m to WebP format`);
-                } catch (e) {
-                    printLog('error', e);
-                    res.writeHead(500, { 'Content-Type': 'text/html' });
-                    res.end(errorPage('500 Internal Server Error'));
-                    return false;
                 }
-            }
-            res.writeHead(200, { 'Content-Type': 'image/webp' });
-            res.end(fs.readFileSync(finalPath));
-        } else if ((config.enableJPGProgressiveConvert && builtinFormat[usedImageExt].cvJPGP) || usedImageExt === 'webp') {
-            const finalPath = path.resolve(usedGroup.path, `${cacheDirName}/${usedImage}.jpg`);
-            if (fs.existsSync(finalPath)) {
-                printLog('info', `Use cached file \x1b[33m${finalPath}`);
-            } else {
-                try {
+                res.writeHead(200, { 'Content-Type': 'image/webp' });
+                res.end(fs.readFileSync(finalPath));
+            } else if ((config.enableJPGProgressiveConvert && builtinFormat[usedImageExt].cvJPGP) || usedImageExt === 'webp') {
+                const finalPath = path.resolve(usedGroup.path, `${cacheDirName}/${usedImage}.jpg`);
+                if (fs.existsSync(finalPath)) {
+                    printLog('info', `Use cached file \x1b[33m${finalPath}`);
+                } else {
                     childProcess.spawnSync('convert', [fullFileName, '-interlace', 'Plane', finalPath]);
                     printLog('info', `Converted \x1b[33m${fullFileName}\x1b[0m to JPEG Progressive format`);
-                } catch (e) {
-                    printLog('error', e);
-                    res.writeHead(500, { 'Content-Type': 'text/html' });
-                    res.end(errorPage('500 Internal Server Error'));
-                    return false;
                 }
+                res.writeHead(200, { 'Content-Type': 'image/jpeg' });
+                res.end(fs.readFileSync(finalPath));
+            } else {
+                res.writeHead(200, { 'Content-Type': builtinFormat[path.parse(fullFileName).ext.slice(1).toLowerCase()].mime });
+                res.end(fs.readFileSync(fullFileName));
             }
-            res.writeHead(200, { 'Content-Type': 'image/jpeg' });
-            res.end(fs.readFileSync(finalPath));
-        } else {
-            res.writeHead(200, { 'Content-Type': builtinFormat[path.parse(fullFileName).ext.slice(1).toLowerCase()].mime });
-            res.end(fs.readFileSync(fullFileName));
+        } catch (e) {
+            printLog('error', e);
+            res.writeHead(500, { 'Content-Type': 'text/html' });
+            res.end(errorPage('500 Internal Server Error'));
+            return false;
         }
     }
     return true;
-}).listen(config.serverPort, config.serverAddress);
+};
+
+http.createServer(serverHandler).listen(config.serverPort, config.serverAddress);
+
 printLog('info', `Server started at\x1b[33m ${config.serverAddress}:${config.serverPort}`);
 
 process.on('SIGINT', () => {
