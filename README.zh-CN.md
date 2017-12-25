@@ -1,6 +1,6 @@
 # OneAnime.js
 
-OneAnime 是一个随机图片服务器，最初目的是为了让访问者看到不一样的博客头图。本项目是前辈 [qwe7002](https://qwe7002.com) 的项目 [OneAnime](https://github.com/qwe7002/OneAnime) 的 JavaScript 复刻版本，使用了 ES6 标准编写。
+OneAnime.js is a random image server, the original purpose is to allow visitors to see a different blog header. This project is a JavaScript clone of [OneAnime](https://github.com/qwe7002/OneAnime), a project of predecessor [qwe7002](https://qwe7002.com).
 
 ## 为什么使用 OneAnime ##
 
@@ -40,7 +40,7 @@ npm install -g oneanime
 
 你可以将图片集放在你指定的目录（`path`）下，只需要在请求时访问正确的地址。例如，如果你将图片放在 `image/photos` 目录下，那么直接请求 `/photos` 即可。**每个图片文件夹至少需要有两张有效图片，否则会被直接忽略。**
 
-接受的图片类型：`jpg`、`jpeg`、`gif`，`png`，`webp`。
+接受的图片类型：`jpg`、`jpeg`、`gif`、`png`、`webp`。
 
 ## 运行
 

@@ -1,6 +1,6 @@
 {
   "name": "oneanime",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "oneanime but written in node.js",
   "main": "index.js",
   "bin": {
@@ -28,5 +28,6 @@
     "eslint-config-airbnb-base": "^12.1.0",
     "eslint-plugin-import": "^2.8.0"
   },
-  "dependencies": {}
+  "dependencies": {},
+  "preferGlobal": true
 }

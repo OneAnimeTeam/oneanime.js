@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const VERSION = '1.0.0';
+const VERSION = '1.0.2';
 const cacheDirName = '.oneanime';
 const childProcess = require('child_process');
 const http = require('http');
