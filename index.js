@@ -19,6 +19,7 @@ const builtinFormat = {
  * 向终端发送一行日志内容
  * @param {string} level - 日志级别，可以是 info、warn、error
  * @param {string} text - 日志文本
+ * @returns {boolean} 是否发送成功
  */
 
 const printLog = (level, text) => {
@@ -47,6 +48,7 @@ const printLog = (level, text) => {
 /**
  * 获取文件列表（通用版）
  * @param {string} dirName - 文件夹名称
+ * @returns {array} 文件列表
  */
 
 const fetchDirList = (dirName) => {
@@ -65,6 +67,7 @@ const fetchDirList = (dirName) => {
 /**
  * 如果没有某文件夹则新建这个文件夹
  * @param {string} name - 文件夹名
+ * @returns {string} 建好的文件夹名
  */
 
 const mkdir = (name) => {
@@ -79,6 +82,7 @@ const mkdir = (name) => {
 /**
  * 从扩展名检查文件是否合法
  * @param {string} name - 文件名
+ * @returns {boolean} 是否合法
  */
 
 const isFileNameVaild = (name) => {
@@ -92,6 +96,7 @@ const isFileNameVaild = (name) => {
 /**
  * 获取错误页 HTML
  * @param {string} status - 错误信息
+ * @returns {string} 错误页 HTML
  */
 
 const errorPage = status => `<html><head>

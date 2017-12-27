@@ -2,6 +2,8 @@
 
 OneAnime 是一个随机图片服务器，最初目的是为了让访问者看到不一样的博客头图。本项目是前辈 [qwe7002](https://qwe7002.com) 的项目 [OneAnime](https://github.com/qwe7002/OneAnime) 的 JavaScript 复刻版本，使用了 ES6 标准编写。
 
+![version](https://img.shields.io/npm/v/oneanime.svg) ![license](https://img.shields.io/npm/l/oneanime.svg)
+
 ## 为什么使用 OneAnime ##
 
 * 将图片格式转换为 `.webp` 格式，节约带宽以及你的磁盘空间。如果不需要，你也可以在配置文件中关闭这些功能。
