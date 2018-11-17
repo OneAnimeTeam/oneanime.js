@@ -2,7 +2,7 @@
 
 [关于本项目（简体中文）](https://github.com/OneAnimeTeam/oneanime.js/blob/master/README.zh-CN.md)
 
-OneAnime.js is a random image server, the original purpose is to allow visitors to see a different blog header. This project is a JavaScript clone of [OneAnime](https://github.com/qwe7002/OneAnime), a project of predecessor [qwe7002](https://qwe7002.com).
+OneAnime.js is a random image server, the original purpose is to allow visitors to see a different blog header.
 
 ![version](https://img.shields.io/npm/v/oneanime.svg) ![license](https://img.shields.io/npm/l/oneanime.svg)
 
