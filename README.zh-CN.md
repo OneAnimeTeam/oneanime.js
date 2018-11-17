@@ -1,6 +1,6 @@
 # OneAnime.js
 
-OneAnime 是一个随机图片服务器，最初目的是为了让访问者看到不一样的博客头图。本项目是前辈 [qwe7002](https://qwe7002.com) 的项目 [OneAnime](https://github.com/qwe7002/OneAnime) 的 JavaScript 复刻版本，使用了 ES6 标准编写。
+OneAnime 是一个随机图片服务器，最初目的是为了让访问者看到不一样的博客头图。
 
 ![version](https://img.shields.io/npm/v/oneanime.svg) ![license](https://img.shields.io/npm/l/oneanime.svg)
 
