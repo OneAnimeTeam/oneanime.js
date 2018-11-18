@@ -144,7 +144,6 @@ const imageHandler = (from, to) => new Promise((resolve, reject) => {
 });
 
 const serverHandler = async (req, res) => {
-    console.time('serve');
     const targetPath = decodeURIComponent(req.url.slice(1));
     const webpSupport = req.headers.accept.indexOf('image/webp') !== -1;
     logger.info(`User ${webpSupport ? '(WebP supported) ' : ''}requested \x1b[33m${targetPath}`);
@@ -167,7 +166,6 @@ const serverHandler = async (req, res) => {
             logger.error(e);
             res.writeHead(500, { 'Content-Type': 'text/html' });
             res.end(errorPage('500 Internal Server Error'));
-            console.timeEnd('serve');
             return false;
         }
     }
