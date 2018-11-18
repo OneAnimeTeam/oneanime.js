@@ -3,5 +3,5 @@
     "serverAddress": "0.0.0.0",
     "serverPort": 8086,
     "enableWebP": true,
-    "enableJPGProgressiveConvert": true
+    "useImageMagick": false
 }

@@ -1,20 +1,21 @@
 #!/usr/bin/env node
 
 const VERSION = require('./package.json').version;
-const childProcess = require('child_process');
 const http = require('http');
 const fs = require('fs-extra');
 const path = require('path');
 const log4js = require('log4js');
+const gm = require('gm');
 
 const logger = log4js.getLogger('OneAnime');
+logger.level = 'info';
 const cacheDirName = '.oneanime';
 const builtinFormat = {
-    png: { mime: 'image/png', cvWebP: true, cvJPGP: true },
-    jpg: { mime: 'image/jpeg', cvWebP: true, cvJPGP: true },
-    jpeg: { mime: 'image/jpeg', cvWebP: true, cvJPGP: true },
-    gif: { mime: 'image/gif', cvWebP: false, cvJPGP: false },
-    webp: { mime: 'image/webp', cvWebP: false, cvJPGP: true },
+    png: { mime: 'image/png', cvWebP: true },
+    jpg: { mime: 'image/jpeg', cvWebP: true },
+    jpeg: { mime: 'image/jpeg', cvWebP: true },
+    gif: { mime: 'image/gif', cvWebP: false },
+    webp: { mime: 'image/webp', cvWebP: false },
 };
 
 /**
@@ -88,8 +89,12 @@ if (process.argv[2] === 'init') {
 }
 
 const configPath = path.resolve(process.cwd(), process.argv[2]);
-const config = JSON.parse(fs.readFileSync(configPath, { encoding: 'utf8' }));
+const config = fs.readJSONSync(configPath, { encoding: 'utf8' });
 const masterPath = path.resolve(path.parse(configPath).dir, config.path);
+let handler = gm;
+if (config.useImageMagick) {
+    handler = gm.subClass({ imageMagick: true });
+}
 
 logger.info('Scanning master directory');
 const masterList = fs.readdirSync(masterPath);
@@ -116,7 +121,29 @@ if (Object.keys(imgList).length === 0) {
     process.exit(1);
 }
 
-const serverHandler = (req, res) => {
+const imageHandler = (from, to) => new Promise((resolve, reject) => {
+    const usedImageExt = path.parse(from).ext.slice(1).toLowerCase();
+    if (config.enableWebP && builtinFormat[usedImageExt].cvWebP) {
+        if (fs.existsSync(to)) {
+            logger.info(`Use cached file \x1b[33m${to}`);
+            resolve(to);
+        } else {
+            handler(from).write(`${to}.webp`, (e) => {
+                if (e) {
+                    reject(e);
+                    return false;
+                }
+                logger.info(`Converted \x1b[33m${from}\x1b[0m to WebP format`);
+                resolve(`${to}.webp`);
+                return true;
+            });
+        }
+    } else {
+        resolve(to);
+    }
+});
+
+const serverHandler = async (req, res) => {
     console.time('serve');
     const targetPath = decodeURIComponent(req.url.slice(1));
     const webpSupport = req.headers.accept.indexOf('image/webp') !== -1;
@@ -129,41 +156,21 @@ const serverHandler = (req, res) => {
             const usedGroup = imgList[targetPath];
             const selectedID = Math.floor(Math.random() * usedGroup.list.length);
             const usedImage = usedGroup.list[selectedID];
-            const usedImageExt = path.parse(usedImage).ext.slice(1).toLowerCase();
-            const fullFileName = path.resolve(usedGroup.path, usedImage);
-            logger.info(`Server selected \x1b[33m${fullFileName}`);
-            if (webpSupport && config.enableWebP && builtinFormat[usedImageExt].cvWebP) {
-                const finalPath = path.resolve(usedGroup.path, `${cacheDirName}/${usedImage}.webp`);
-                if (fs.existsSync(finalPath)) {
-                    logger.info(`Use cached file \x1b[33m${finalPath}`);
-                } else {
-                    childProcess.spawnSync('convert', [fullFileName, finalPath]);
-                    logger.info(`Converted \x1b[33m${fullFileName}\x1b[0m to WebP format`);
-                }
-                res.writeHead(200, { 'Content-Type': 'image/webp' });
-                res.end(fs.readFileSync(finalPath));
-            } else if ((config.enableJPGProgressiveConvert && builtinFormat[usedImageExt].cvJPGP) || usedImageExt === 'webp') {
-                const finalPath = path.resolve(usedGroup.path, `${cacheDirName}/${usedImage}.jpg`);
-                if (fs.existsSync(finalPath)) {
-                    logger.info(`Use cached file \x1b[33m${finalPath}`);
-                } else {
-                    childProcess.spawnSync('convert', [fullFileName, '-interlace', 'Plane', finalPath]);
-                    logger.info(`Converted \x1b[33m${fullFileName}\x1b[0m to JPEG Progressive format`);
-                }
-                res.writeHead(200, { 'Content-Type': 'image/jpeg' });
-                res.end(fs.readFileSync(finalPath));
-            } else {
-                res.writeHead(200, { 'Content-Type': builtinFormat[path.parse(fullFileName).ext.slice(1).toLowerCase()].mime });
-                res.end(fs.readFileSync(fullFileName));
-            }
+            const fullPath = path.resolve(usedGroup.path, usedImage);
+            const finalPath = path.resolve(usedGroup.path, `${cacheDirName}/${usedImage}`);
+            logger.info(`Server selected \x1b[33m${fullPath}`);
+            const resultPath = await imageHandler(fullPath, finalPath);
+            const resultExt = path.parse(resultPath).ext.slice(1).toLowerCase();
+            res.writeHead(200, { 'Content-Type': builtinFormat[resultExt] });
+            res.end(fs.readFileSync(resultPath));
         } catch (e) {
             logger.error(e);
             res.writeHead(500, { 'Content-Type': 'text/html' });
             res.end(errorPage('500 Internal Server Error'));
+            console.timeEnd('serve');
             return false;
         }
     }
-    console.timeEnd('serve');
     return true;
 };
 
