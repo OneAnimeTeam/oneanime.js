@@ -14,7 +14,7 @@ OneAnime.js is a random image server, the original purpose is to allow visitors 
 ## Requirement
 
 * Node.js 8.5+
-* imagemagick WITH WebP support. For Debian / Ubuntu user, you can just install it via `sudo apt install imagemagick webp`
+* GraphicsMagick or ImageMagick WITH WebP support
 
 ## Configurion
 
@@ -26,7 +26,7 @@ First, you should get a template configure file via `oneanime init` command. It 
     "serverAddress": "0.0.0.0",
     "serverPort": 8086,
     "enableWebP": true,
-    "enableJPGProgressiveConvert": true
+    "useImageMagick": false
 }
 ```
 
@@ -34,11 +34,11 @@ First, you should get a template configure file via `oneanime init` command. It 
 * `serverAddress`：The server listens on the IP address. Note that 0.0.0.0 will cause the OneAnime.js server to be directly accessible on the extranet
 * `serverPort`：The port on which the server is listening
 * `enableWebP`：Whether to enable WebP conversion
-* `enableJPGProgressiveConvert`：Whether to enable progressive JPEG conversion (for non-WebP-enabled browsers such as IE and FireFox). However, if you have WebP-formatted images in your image folder and they happen to be requested, progressive JPEGs will still be converted for those browsers.
+* `useImageMagick`: Use ImageMagick instead of GraphicsMagick
 
 You can put the collection of images in the directory you specified (`path`), only need to access the correct address when requested. For example, if you place an image in the image / photos directory, you can request `photos` directly. **Each image folder requires at least two valid images, otherwise it will be ignored.**
 
-Accepted image type: `jpg`, `jpeg`, `gif`, `png`, `webp`
+Accepted image type: `jpg`, `jpeg`, `gif`, `png`
 
 ## Execute
 
