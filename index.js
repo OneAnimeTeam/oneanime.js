@@ -1,48 +1,20 @@
 #!/usr/bin/env node
 
-const VERSION = '1.0.2';
-const cacheDirName = '.oneanime';
+const VERSION = require('./package.json').version;
 const childProcess = require('child_process');
 const http = require('http');
-const fs = require('fs');
+const fs = require('fs-extra');
 const path = require('path');
+const log4js = require('log4js');
 
+const logger = log4js.getLogger('OneAnime');
+const cacheDirName = '.oneanime';
 const builtinFormat = {
     png: { mime: 'image/png', cvWebP: true, cvJPGP: true },
     jpg: { mime: 'image/jpeg', cvWebP: true, cvJPGP: true },
     jpeg: { mime: 'image/jpeg', cvWebP: true, cvJPGP: true },
     gif: { mime: 'image/gif', cvWebP: false, cvJPGP: false },
     webp: { mime: 'image/webp', cvWebP: false, cvJPGP: true },
-};
-
-/**
- * 向终端发送一行日志内容
- * @param {string} level - 日志级别，可以是 info、warn、error
- * @param {string} text - 日志文本
- * @returns {boolean} 是否发送成功
- */
-
-const printLog = (level, text) => {
-    let tmpText = '';
-    let logFunc;
-    switch (level) {
-    case 'info':
-        logFunc = console.log;
-        tmpText += '\x1b[36m[INFO]\x1b[0m ';
-        break;
-    case 'warn':
-        logFunc = console.warn;
-        tmpText += '\x1b[33m[WARN]\x1b[0m ';
-        break;
-    case 'error':
-        logFunc = console.error;
-        tmpText += '\x1b[31m[ERROR]\x1b[0m ';
-        break;
-    default:
-        return false;
-    }
-    logFunc(`${tmpText + text}\x1b[0m`);
-    return true;
 };
 
 /**
@@ -62,21 +34,6 @@ const fetchDirList = (dirName) => {
     } catch (e) {
         return false;
     }
-};
-
-/**
- * 如果没有某文件夹则新建这个文件夹
- * @param {string} name - 文件夹名
- * @returns {string} 建好的文件夹名
- */
-
-const mkdir = (name) => {
-    try {
-        fs.readdirSync(name);
-    } catch (e) {
-        fs.mkdirSync(name);
-    }
-    return name;
 };
 
 /**
@@ -107,15 +64,6 @@ const errorPage = status => `<html><head>
 <hr><center>OneAnimeJS/${VERSION}</center>
 </body></html>`;
 
-// 针对早期 Node.js 版本的 Polyfill
-
-if (typeof fs.copyFileSync === 'undefined') {
-    fs.copyFileSync = (from, to) => {
-        fs.createReadStream(from).pipe(fs.createWriteStream(to));
-        return to;
-    };
-}
-
 if (typeof process.argv[2] === 'undefined') {
     console.error('Usage: oneanime config_file');
     console.error('Want a new config file? Run `oneanime init`');
@@ -135,7 +83,7 @@ if (process.argv[2] === 'init') {
         path.resolve(__dirname, 'config.example.json'),
         path.resolve(process.cwd(), configFileName),
     );
-    printLog('info', `Template config file copied to \x1b[33m${path.resolve(process.cwd(), configFileName)}`);
+    logger.info(`Template config file copied to \x1b[33m${path.resolve(process.cwd(), configFileName)}`);
     process.exit(0);
 }
 
@@ -143,7 +91,7 @@ const configPath = path.resolve(process.cwd(), process.argv[2]);
 const config = JSON.parse(fs.readFileSync(configPath, { encoding: 'utf8' }));
 const masterPath = path.resolve(path.parse(configPath).dir, config.path);
 
-printLog('info', 'Scanning master directory');
+logger.info('Scanning master directory');
 const masterList = fs.readdirSync(masterPath);
 const imgList = {};
 
@@ -153,25 +101,26 @@ masterList.forEach((i) => {
     if (tmp) {
         const tmpList = tmp.filter(isFileNameVaild);
         if (tmpList.length <= 1) {
-            printLog('warn', `Invaild: ${tmPath}, with less than 2 images`);
+            logger.warn(`Invaild: ${tmPath}, with less than 2 images`);
             return false;
         }
         imgList[i] = { path: tmPath, list: tmpList };
-        mkdir(path.resolve(tmPath, cacheDirName));
-        printLog('info', `Vaild: ${tmPath}, ${tmpList.length} images found`);
+        fs.mkdirpSync(path.resolve(tmPath, cacheDirName));
+        logger.info(`Vaild: ${tmPath}, ${tmpList.length} images found`);
     }
     return true;
 });
 
 if (Object.keys(imgList).length === 0) {
-    printLog('error', 'No vaild image directory');
+    logger.error('No vaild image directory');
     process.exit(1);
 }
 
 const serverHandler = (req, res) => {
+    console.time('serve');
     const targetPath = decodeURIComponent(req.url.slice(1));
     const webpSupport = req.headers.accept.indexOf('image/webp') !== -1;
-    printLog('info', `User ${webpSupport ? '(WebP supported) ' : ''}requested \x1b[33m${targetPath}`);
+    logger.info(`User ${webpSupport ? '(WebP supported) ' : ''}requested \x1b[33m${targetPath}`);
     if (typeof imgList[targetPath] === 'undefined') {
         res.writeHead(404, { 'Content-Type': 'text/html' });
         res.end(errorPage('404 Not Found'));
@@ -182,24 +131,24 @@ const serverHandler = (req, res) => {
             const usedImage = usedGroup.list[selectedID];
             const usedImageExt = path.parse(usedImage).ext.slice(1).toLowerCase();
             const fullFileName = path.resolve(usedGroup.path, usedImage);
-            printLog('info', `Server selected \x1b[33m${fullFileName}`);
+            logger.info(`Server selected \x1b[33m${fullFileName}`);
             if (webpSupport && config.enableWebP && builtinFormat[usedImageExt].cvWebP) {
                 const finalPath = path.resolve(usedGroup.path, `${cacheDirName}/${usedImage}.webp`);
                 if (fs.existsSync(finalPath)) {
-                    printLog('info', `Use cached file \x1b[33m${finalPath}`);
+                    logger.info(`Use cached file \x1b[33m${finalPath}`);
                 } else {
                     childProcess.spawnSync('convert', [fullFileName, finalPath]);
-                    printLog('info', `Converted \x1b[33m${fullFileName}\x1b[0m to WebP format`);
+                    logger.info(`Converted \x1b[33m${fullFileName}\x1b[0m to WebP format`);
                 }
                 res.writeHead(200, { 'Content-Type': 'image/webp' });
                 res.end(fs.readFileSync(finalPath));
             } else if ((config.enableJPGProgressiveConvert && builtinFormat[usedImageExt].cvJPGP) || usedImageExt === 'webp') {
                 const finalPath = path.resolve(usedGroup.path, `${cacheDirName}/${usedImage}.jpg`);
                 if (fs.existsSync(finalPath)) {
-                    printLog('info', `Use cached file \x1b[33m${finalPath}`);
+                    logger.info(`Use cached file \x1b[33m${finalPath}`);
                 } else {
                     childProcess.spawnSync('convert', [fullFileName, '-interlace', 'Plane', finalPath]);
-                    printLog('info', `Converted \x1b[33m${fullFileName}\x1b[0m to JPEG Progressive format`);
+                    logger.info(`Converted \x1b[33m${fullFileName}\x1b[0m to JPEG Progressive format`);
                 }
                 res.writeHead(200, { 'Content-Type': 'image/jpeg' });
                 res.end(fs.readFileSync(finalPath));
@@ -208,20 +157,21 @@ const serverHandler = (req, res) => {
                 res.end(fs.readFileSync(fullFileName));
             }
         } catch (e) {
-            printLog('error', e);
+            logger.error(e);
             res.writeHead(500, { 'Content-Type': 'text/html' });
             res.end(errorPage('500 Internal Server Error'));
             return false;
         }
     }
+    console.timeEnd('serve');
     return true;
 };
 
 http.createServer(serverHandler).listen(config.serverPort, config.serverAddress);
 
-printLog('info', `Server started at\x1b[33m ${config.serverAddress}:${config.serverPort}`);
+logger.info(`Server started at\x1b[33m ${config.serverAddress}:${config.serverPort}`);
 
 process.on('SIGINT', () => {
-    printLog('info', 'Interrupted');
+    logger.info('Interrupted');
     process.exit(2);
 });
