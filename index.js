@@ -57,13 +57,16 @@ const isFileNameVaild = (name) => {
  * @returns {string} 错误页 HTML
  */
 
-const errorPage = status => `<html><head>
-<title>${status}</title>
+const errorPage = status => `<html>
+<head>
+    <title>${status}</title>
 </head>
-<body bgcolor="white">
-<center><h1>${status}</h1></center>
-<hr><center>OneAnimeJS/${VERSION}</center>
-</body></html>`;
+<body>
+    <center><h1>${status}</h1></center>
+    <hr>
+    <center>OneAnimeJS/${VERSION}</center>
+</body>
+</html>`;
 
 if (typeof process.argv[2] === 'undefined') {
     console.error('Usage: oneanime config_file');
