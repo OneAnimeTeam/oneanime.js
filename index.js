@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
-const VERSION = require('./package.json').version;
 const http = require('http');
 const fs = require('fs-extra');
 const path = require('path');
 const log4js = require('log4js');
 const gm = require('gm');
+const VERSION = require('./package.json').version;
 
 const logger = log4js.getLogger('OneAnime');
 logger.level = 'info';
@@ -57,7 +57,7 @@ const isFileNameVaild = (name) => {
  * @returns {string} 错误页 HTML
  */
 
-const errorPage = status => `<html>
+const errorPage = (status) => `<html>
 <head>
     <title>${status}</title>
 </head>
@@ -108,8 +108,8 @@ masterList.forEach((i) => {
     const tmp = fetchDirList(tmPath);
     if (tmp) {
         const tmpList = tmp.filter(isFileNameVaild);
-        if (tmpList.length <= 1) {
-            logger.warn(`Invaild: ${tmPath}, with less than 2 images`);
+        if (tmpList.length < 1) {
+            logger.warn(`Invaild: ${tmPath}, with less than 1 images`);
             return false;
         }
         imgList[i] = { path: tmPath, list: tmpList };
