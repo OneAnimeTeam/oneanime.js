@@ -1,7 +1,0 @@
-image: docker.reallserver.cn/public/docker-git
-
-release_github: 
-  only:
-  - master
-  script:
-  - git push --set-upstream https://${github_key}@github.com/OneAnimeTeam/oneanime.js.git HEAD:master
