@@ -1,37 +1,36 @@
 {
   "name": "oneanime",
-  "version": "1.0.4",
-  "description": "oneanime but written in node.js",
+  "version": "2.0.0",
+  "description": "OneAnime but written in node.js",
   "main": "index.js",
+  "type": "module",
   "bin": {
     "oneanime": "./index.js"
   },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tcdw/oneanime.js.git"
+    "url": "git+https://github.com/OneAnimeTeam/oneanime.js.git"
   },
   "keywords": [
     "random",
     "image"
   ],
-  "author": "tcdw <admin@tcdw.net>",
+  "author": "tcdw <tcdw2011@gmail.com>",
   "license": "BSD-3-Clause",
   "bugs": {
-    "url": "https://github.com/tcdw/oneanime.js/issues"
+    "url": "https://github.com/OneAnimeTeam/oneanime.js/issues"
   },
-  "homepage": "https://github.com/tcdw/oneanime.js#readme",
+  "homepage": "https://github.com/OneAnimeTeam/oneanime.js#readme",
   "devDependencies": {
-    "eslint": "^7.14.0",
-    "eslint-config-airbnb-base": "^14.2.1",
-    "eslint-plugin-import": "^2.22.1"
+    "@types/fs-extra": "^11.0.1",
+    "eslint": "^8.34.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.27.5"
   },
   "dependencies": {
-    "fs-extra": "^9.0.1",
-    "gm": "^1.23.1",
-    "log4js": "^6.3.0"
+    "fs-extra": "^11.1.0",
+    "gm": "^1.25.0",
+    "log4js": "^6.7.1"
   },
   "preferGlobal": true
 }

@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 
-const http = require('http');
-const fs = require('fs-extra');
-const path = require('path');
-const log4js = require('log4js');
-const gm = require('gm');
-const VERSION = require('./package.json').version;
+import * as http from 'http';
+import * as path from 'path';
+import { fileURLToPath, URL } from 'url';
+import fs from 'fs-extra';
+import log4js from 'log4js';
+import gm from 'gm';
+
+const VERSION = fs.readJSONSync(fileURLToPath(new URL("./package.json", import.meta.url)), { encoding: 'utf8' }).version;
 
 const logger = log4js.getLogger('OneAnime');
 logger.level = 'info';
@@ -84,7 +86,7 @@ if (process.argv[2] === 'init') {
         configFileName = `config.${d}.json`;
     }
     fs.copyFileSync(
-        path.resolve(__dirname, 'config.example.json'),
+        fileURLToPath(new URL("./config.example.json", import.meta.url)),
         path.resolve(process.cwd(), configFileName),
     );
     logger.info(`Template config file copied to \x1b[33m${path.resolve(process.cwd(), configFileName)}`);
